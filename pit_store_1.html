@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pit Store — Motorsport Gear</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   TOKENS — paleta original
+══════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --ink:    #080808;
+  --coal:   #131313;
+  --steel:  #1c1c1c;
+  --grid:   #282828;
+  --smoke:  #363636;
+  --muted:  #6a6a6a;
+  --fog:    #969696;
+  --white:  #f5f3ee;
+  --off:    #e8e5df;
+  --red:    #cc1122;
+  --red2:   #a30e1c;
+  --gold:   #d4a017;
+  --green:  #1a9645;
+  --head:   'Space Grotesk', sans-serif;
+  --body:   'Inter', sans-serif;
+  --mono:   'Space Mono', monospace;
+  --ease:   cubic-bezier(.4,0,.2,1);
+}
+html { scroll-behavior:smooth; }
+body { background:var(--ink); color:var(--white); font-family:var(--body); font-size:14px; line-height:1.6; overflow-x:hidden; }
+a { text-decoration:none; color:inherit; }
+button { font-family:inherit; cursor:pointer; border:none; background:none; }
+input, select { font-family:inherit; }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--coal); }
+::-webkit-scrollbar-thumb { background:var(--smoke); border-radius:2px; }
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+#hdr {
+  position:sticky; top:0; z-index:200;
+  background:rgba(8,8,8,.96); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--grid);
+}
+.hdr-main { display:flex; align-items:center; gap:20px; padding:0 36px; height:60px; }
+
+.logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.logo-box {
+  width:32px; height:32px; background:var(--red);
+  display:flex; align-items:center; justify-content:center;
+  clip-path:polygon(0 0,100% 0,100% 75%,75% 100%,0 100%);
+}
+.logo-box svg { width:16px; height:16px; }
+.logo-name { font-family:var(--head); font-weight:700; font-size:17px; letter-spacing:-.02em; color:var(--white); }
+.logo-name b { color:var(--red); font-weight:700; }
+
+.search-wrap { flex:1; max-width:440px; position:relative; }
+.search-wrap input {
+  width:100%; height:36px; background:var(--steel);
+  border:1px solid var(--grid); border-radius:2px;
+  color:var(--white); padding:0 36px 0 12px; font-size:13px;
+  font-family:var(--body); transition:border-color .2s;
+}
+.search-wrap input::placeholder { color:var(--muted); }
+.search-wrap input:focus { outline:none; border-color:var(--red); }
+.s-icon { position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px; pointer-events:none; }
+
+.nav { display:flex; gap:0; margin-left:auto; }
+.nav a {
+  font-family:var(--body); font-size:13px; font-weight:500; color:var(--fog);
+  padding:6px 12px; border-radius:2px; transition:color .15s, background .15s;
+}
+.nav a:hover { color:var(--white); background:var(--steel); }
+.nav a.on { color:var(--white); }
+
+.cart-btn {
+  position:relative; display:flex; align-items:center; gap:6px;
+  background:var(--red); color:var(--white);
+  font-family:var(--head); font-weight:600; font-size:13px;
+  padding:7px 16px; border-radius:2px;
+  transition:background .2s, transform .1s; flex-shrink:0;
+}
+.cart-btn:hover { background:var(--red2); }
+.cart-btn:active { transform:scale(.97); }
+.cbadge {
+  position:absolute; top:-5px; right:-5px;
+  background:var(--white); color:var(--ink);
+  font-family:var(--mono); font-size:9px; font-weight:700;
+  min-width:16px; height:16px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center; padding:0 3px;
+}
+.cbadge.bump { animation:bump .28s var(--ease); }
+@keyframes bump { 0%{transform:scale(1)} 50%{transform:scale(1.7)} 100%{transform:scale(1)} }
+
+/* chips */
+.chips { display:flex; gap:4px; padding:8px 36px; overflow-x:auto; scrollbar-width:none; }
+.chips::-webkit-scrollbar { display:none; }
+.chip {
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--fog);
+  padding:4px 12px; border:1px solid var(--grid); border-radius:1px;
+  white-space:nowrap; transition:all .15s; flex-shrink:0;
+}
+.chip:hover { border-color:var(--fog); color:var(--white); }
+.chip.on { background:var(--red); border-color:var(--red); color:var(--white); }
+
+/* ══════════════════════════════════════════
+   HERO
+══════════════════════════════════════════ */
+#hero {
+  position:relative; height:480px; display:flex; align-items:center;
+  padding:0 36px; overflow:hidden; border-bottom:1px solid var(--grid);
+}
+.hero-bg { position:absolute; inset:0; }
+.hero-bg::before {
+  content:''; position:absolute; inset:0;
+  background-image: radial-gradient(circle, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity:.6;
+}
+.hero-bg::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(100deg, rgba(8,8,8,1) 42%, rgba(8,8,8,.6) 68%, transparent 100%);
+}
+.hero-geo {
+  position:absolute; right:0; top:0; bottom:0; width:55%;
+  pointer-events:none; overflow:hidden;
+}
+.hero-geo svg { width:100%; height:100%; opacity:.12; }
+
+.hero-c { position:relative; z-index:2; max-width:540px; }
+.hero-tag {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--red);
+  margin-bottom:16px;
+  display:flex; align-items:center; gap:8px;
+}
+.hero-tag::before { content:''; width:24px; height:1px; background:var(--red); }
+.hero-h {
+  font-family:var(--head); font-weight:700;
+  font-size:clamp(44px,7vw,80px); line-height:1.0;
+  letter-spacing:-.03em; margin-bottom:16px; color:var(--white);
+}
+.hero-h span { color:var(--red); display:block; }
+.hero-sub { font-size:15px; font-weight:300; color:var(--fog); max-width:380px; line-height:1.7; margin-bottom:28px; }
+.hero-acts { display:flex; gap:10px; }
+.btn-r {
+  background:var(--red); color:var(--white);
+  font-family:var(--head); font-weight:600; font-size:13px;
+  padding:11px 24px; border-radius:2px; letter-spacing:.02em;
+  transition:background .2s, transform .1s;
+}
+.btn-r:hover { background:var(--red2); transform:translateY(-1px); }
+.btn-o {
+  border:1px solid var(--smoke); color:var(--white);
+  font-family:var(--head); font-weight:500; font-size:13px;
+  padding:10px 24px; border-radius:2px;
+  transition:border-color .2s;
+}
+.btn-o:hover { border-color:var(--fog); }
+
+/* ══════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════ */
+#main { display:flex; min-height:60vh; }
+
+#sb {
+  width:220px; flex-shrink:0; background:var(--coal);
+  border-right:1px solid var(--grid); padding:20px 0;
+  position:sticky; top:104px; align-self:flex-start;
+  max-height:calc(100vh - 104px); overflow-y:auto;
+}
+.sb-s { padding:0 16px 18px; }
+.sb-lbl { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.sb-hr { border:none; border-top:1px solid var(--grid); margin:4px 16px 16px; }
+.sel {
+  width:100%; height:32px; background:var(--steel); border:1px solid var(--grid);
+  border-radius:2px; color:var(--white); padding:0 8px; font-size:12px; appearance:none;
+}
+.sel:focus { outline:none; border-color:var(--red); }
+.pr { display:flex; gap:6px; align-items:center; }
+.pr input {
+  width:70px; height:30px; background:var(--steel); border:1px solid var(--grid);
+  border-radius:2px; color:var(--white); padding:0 7px; font-size:12px;
+}
+.pr input:focus { outline:none; border-color:var(--red); }
+.pr-sep { font-size:12px; color:var(--muted); }
+.rop { display:flex; flex-direction:column; gap:5px; }
+.rop label { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--fog); cursor:pointer; }
+.rop input { accent-color:var(--red); }
+.rstars { color:var(--gold); font-size:11px; letter-spacing:-1px; }
+.btn-clr {
+  display:block; width:calc(100% - 32px); margin:0 16px;
+  text-align:center; padding:7px; border:1px solid var(--grid); border-radius:2px;
+  color:var(--muted); font-family:var(--mono); font-size:9px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; transition:all .2s;
+}
+.btn-clr:hover { border-color:var(--red); color:var(--red); }
+
+#cat { flex:1; padding:20px 28px; }
+.cat-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; }
+.vtoggle { display:flex; gap:3px; }
+.vbtn { width:30px; height:30px; border-radius:2px; border:1px solid var(--grid); color:var(--muted); display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .18s; }
+.vbtn.on, .vbtn:hover { border-color:var(--red); color:var(--red); }
+
+/* ══════════════════════════════════════════
+   PRODUCT GRID
+══════════════════════════════════════════ */
+#pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1px; background:var(--grid); }
+#pgrid.lv { grid-template-columns:1fr; gap:0; background:transparent; }
+
+.pc {
+  background:var(--coal); display:flex; flex-direction:column;
+  cursor:pointer; position:relative; transition:background .2s;
+}
+.pc:hover { background:var(--steel); z-index:2; }
+
+.pc-badge {
+  position:absolute; top:10px; left:10px; z-index:3;
+  font-family:var(--mono); font-size:8px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  padding:3px 7px;
+}
+.b-sale { background:var(--red); color:var(--white); }
+.b-new  { background:var(--white); color:var(--ink); }
+.b-hot  { background:var(--gold); color:var(--ink); }
+
+.pc-wish {
+  position:absolute; top:8px; right:8px; z-index:3;
+  width:26px; height:26px; border-radius:50%;
+  background:rgba(19,19,19,.8); border:1px solid var(--grid);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; color:var(--muted); opacity:0; transition:all .18s;
+}
+.pc:hover .pc-wish { opacity:1; }
+.pc-wish:hover { border-color:var(--red); color:var(--red); }
+.pc-wish.w { color:var(--red); opacity:1; }
+
+.pc-img {
+  height:188px; background:var(--steel);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  border-bottom:1px solid var(--grid); position:relative;
+}
+.img-placeholder {
+  width:100%; height:100%; display:flex;
+  align-items:center; justify-content:center;
+  background:var(--steel);
+}
+.img-placeholder span {
+  font-family:var(--head); font-weight:700; font-size:48px;
+  color:var(--grid); text-transform:uppercase; user-select:none;
+}
+
+.pc-body { padding:14px; flex:1; display:flex; flex-direction:column; gap:5px; }
+.pc-brand { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--red); }
+.pc-name { font-family:var(--head); font-weight:600; font-size:15px; line-height:1.25; color:var(--white); }
+.pc-desc { font-size:12px; color:var(--muted); line-height:1.5; flex:1; }
+.pc-rat { display:flex; align-items:center; gap:5px; margin-top:2px; }
+.pc-stars { color:var(--gold); font-size:10px; letter-spacing:-1px; }
+.pc-rc { font-size:10px; color:var(--muted); font-family:var(--mono); }
+
+.pc-foot { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--grid); }
+.p-old { font-size:10px; color:var(--muted); text-decoration:line-through; display:block; line-height:1; }
+.p-now { font-family:var(--mono); font-weight:700; font-size:18px; color:var(--white); line-height:1; }
+.btn-cart {
+  background:var(--red); color:var(--white);
+  font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  padding:7px 12px; border-radius:2px; transition:background .18s, transform .1s;
+}
+.btn-cart:hover { background:var(--red2); }
+.btn-cart:active { transform:scale(.94); }
+
+#pgrid.lv .pc { flex-direction:row; border-bottom:1px solid var(--grid); }
+#pgrid.lv .pc-img { width:120px; height:100px; flex-shrink:0; border-bottom:none; border-right:1px solid var(--grid); }
+#pgrid.lv .pc-foot { border-top:none; border-left:1px solid var(--grid); flex-direction:column; justify-content:center; padding:12px; gap:8px; min-width:120px; }
+#pgrid.lv .pc-wish { opacity:1; }
+
+.empty { grid-column:1/-1; padding:60px 20px; text-align:center; color:var(--muted); }
+.empty .ei { font-size:44px; margin-bottom:12px; }
+.empty h3 { font-family:var(--head); font-size:18px; color:var(--fog); margin-bottom:4px; }
+
+/* ══════════════════════════════════════════
+   CART DRAWER
+══════════════════════════════════════════ */
+#cov { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:500; opacity:0; pointer-events:none; transition:opacity .28s; }
+#cov.open { opacity:1; pointer-events:all; }
+#cdr {
+  position:fixed; top:0; right:0; bottom:0; width:380px; max-width:100vw;
+  background:var(--coal); border-left:1px solid var(--grid);
+  z-index:501; display:flex; flex-direction:column;
+  transform:translateX(100%); transition:transform .32s var(--ease);
+}
+#cdr.open { transform:translateX(0); }
+.cdr-hd { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--grid); flex-shrink:0; }
+.cdr-hd h2 { font-family:var(--head); font-weight:700; font-size:17px; }
+.cdr-x { width:28px; height:28px; border-radius:50%; border:1px solid var(--grid); color:var(--fog); display:flex; align-items:center; justify-content:center; font-size:14px; transition:all .18s; }
+.cdr-x:hover { border-color:var(--red); color:var(--red); }
+.cdr-items { flex:1; overflow-y:auto; padding:12px 20px; }
+.cdr-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; color:var(--muted); text-align:center; }
+.cdr-empty span { font-size:40px; }
+.ci { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--grid); }
+.ci:last-child { border-bottom:none; }
+.ci-thumb { width:56px; height:56px; flex-shrink:0; background:var(--steel); border:1px solid var(--grid); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.ci-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.ci-thumb .img-placeholder { width:56px; height:56px; }
+.ci-thumb .img-placeholder span { font-size:20px; }
+.ci-info { flex:1; min-width:0; }
+.ci-brand { font-family:var(--mono); font-size:8px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--red); }
+.ci-name { font-family:var(--head); font-size:13px; font-weight:600; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ci-ctl { display:flex; align-items:center; gap:6px; margin-top:6px; }
+.qb { width:22px; height:22px; border:1px solid var(--grid); border-radius:2px; background:var(--steel); color:var(--white); font-size:13px; display:flex; align-items:center; justify-content:center; transition:border-color .15s; }
+.qb:hover { border-color:var(--red); }
+.qv { font-family:var(--mono); font-size:12px; min-width:20px; text-align:center; }
+.ci-rm { margin-left:auto; font-size:11px; color:var(--muted); transition:color .15s; }
+.ci-rm:hover { color:var(--red); }
+.ci-price { font-family:var(--mono); font-weight:700; font-size:15px; align-self:center; flex-shrink:0; }
+.cdr-ft { border-top:1px solid var(--grid); padding:16px 20px; flex-shrink:0; }
+.cdr-totals { margin-bottom:12px; display:flex; flex-direction:column; gap:4px; }
+.ct { display:flex; justify-content:space-between; font-size:12px; color:var(--fog); font-family:var(--mono); }
+.ct.tot { font-size:17px; font-weight:700; color:var(--white); border-top:1px solid var(--grid); padding-top:8px; margin-top:4px; font-family:var(--head); }
+.btn-chk { width:100%; padding:12px; background:var(--red); color:var(--white); border-radius:2px; font-family:var(--head); font-weight:600; font-size:13px; letter-spacing:.03em; transition:background .18s; margin-bottom:7px; }
+.btn-chk:hover { background:var(--red2); }
+.btn-cnt { width:100%; padding:9px; border:1px solid var(--grid); border-radius:2px; color:var(--fog); font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; transition:all .18s; }
+.btn-cnt:hover { border-color:var(--fog); color:var(--white); }
+
+/* ══════════════════════════════════════════
+   MODAL PRODUTO
+══════════════════════════════════════════ */
+#mov { position:fixed; inset:0; background:rgba(0,0,0,.82); z-index:600; opacity:0; pointer-events:none; transition:opacity .28s; display:flex; align-items:center; justify-content:center; padding:20px; }
+#mov.open { opacity:1; pointer-events:all; }
+#pmod { background:var(--coal); border:1px solid var(--grid); width:100%; max-width:700px; max-height:90vh; overflow-y:auto; transform:scale(.93); transition:transform .3s var(--ease); }
+#mov.open #pmod { transform:scale(1); }
+.mod-grid { display:grid; grid-template-columns:1fr 1fr; }
+.mod-img { background:var(--steel); min-height:300px; display:flex; align-items:center; justify-content:center; overflow:hidden; border-right:1px solid var(--grid); position:relative; }
+.mod-img img { width:100%; height:100%; object-fit:cover; display:block; }
+.mod-img .img-placeholder { min-height:300px; width:100%; }
+.mod-img .img-placeholder span { font-size:72px; }
+.mod-info { padding:24px; display:flex; flex-direction:column; gap:10px; }
+.mod-x { align-self:flex-end; width:26px; height:26px; border-radius:50%; border:1px solid var(--grid); color:var(--fog); font-size:13px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.mod-x:hover { border-color:var(--red); color:var(--red); }
+.mod-brand { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--red); }
+.mod-name { font-family:var(--head); font-weight:700; font-size:20px; line-height:1.2; color:var(--white); }
+.mod-rat { display:flex; align-items:center; gap:6px; }
+.mod-stars { color:var(--gold); font-size:12px; }
+.mod-desc { font-size:13px; color:var(--fog); line-height:1.7; }
+.mod-specs { display:flex; flex-direction:column; }
+.spr { display:flex; justify-content:space-between; font-size:11px; padding:5px 0; border-bottom:1px solid var(--grid); }
+.spr:last-child { border-bottom:none; }
+.spl { color:var(--muted); font-family:var(--mono); }
+.spv { color:var(--white); font-weight:500; }
+.mod-pr { display:flex; align-items:flex-end; gap:8px; }
+.mod-old { font-size:12px; color:var(--muted); text-decoration:line-through; }
+.mod-price { font-family:var(--mono); font-weight:700; font-size:26px; color:var(--white); }
+.mod-qty { display:flex; align-items:center; gap:8px; }
+.mod-ql { font-size:11px; color:var(--muted); font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em; }
+.mqb { width:28px; height:28px; border:1px solid var(--grid); border-radius:2px; background:var(--steel); color:var(--white); font-size:14px; display:flex; align-items:center; justify-content:center; transition:border-color .15s; }
+.mqb:hover { border-color:var(--red); }
+.mqv { font-family:var(--mono); font-size:14px; min-width:24px; text-align:center; }
+.btn-madd { background:var(--red); color:var(--white); font-family:var(--head); font-weight:600; font-size:13px; letter-spacing:.02em; padding:12px; border-radius:2px; width:100%; transition:background .18s, transform .1s; }
+.btn-madd:hover { background:var(--red2); }
+.btn-madd:active { transform:scale(.98); }
+
+/* ══════════════════════════════════════════
+   CHECKOUT
+══════════════════════════════════════════ */
+#chkov { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:700; opacity:0; pointer-events:none; transition:opacity .28s; display:flex; align-items:center; justify-content:center; padding:20px; }
+#chkov.open { opacity:1; pointer-events:all; }
+#chkmod { background:var(--coal); border:1px solid var(--grid); width:100%; max-width:500px; padding:28px; transform:scale(.93); transition:transform .3s var(--ease); }
+#chkov.open #chkmod { transform:scale(1); }
+.chk-title { font-family:var(--head); font-weight:700; font-size:20px; margin-bottom:20px; }
+.fr { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:9px; }
+.fr.full { grid-template-columns:1fr; }
+.fg { display:flex; flex-direction:column; gap:3px; }
+.fg label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.fg input, .fg select { height:36px; background:var(--steel); border:1px solid var(--grid); border-radius:2px; color:var(--white); padding:0 10px; font-size:13px; }
+.fg input:focus, .fg select:focus { outline:none; border-color:var(--red); }
+.chk-tot { display:flex; justify-content:space-between; align-items:center; margin:16px 0 12px; padding:12px 0; border-top:1px solid var(--grid); font-family:var(--head); font-weight:700; font-size:17px; }
+.chk-tot span { color:var(--fog); font-size:12px; font-family:var(--mono); font-weight:400; }
+.chk-acts { display:flex; gap:9px; }
+.btn-ok { flex:1; padding:12px; background:var(--red); color:var(--white); border-radius:2px; font-family:var(--head); font-weight:600; font-size:13px; letter-spacing:.02em; transition:background .18s; }
+.btn-ok:hover { background:var(--red2); }
+.btn-bk { padding:12px 16px; border:1px solid var(--grid); border-radius:2px; color:var(--fog); font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; transition:all .18s; }
+.btn-bk:hover { border-color:var(--fog); color:var(--white); }
+.chk-ok { display:none; text-align:center; padding:12px 0; }
+.chk-ok .si { font-size:48px; margin-bottom:12px; }
+.chk-ok h3 { font-family:var(--head); font-size:22px; margin-bottom:6px; color:var(--green); }
+.chk-ok p { color:var(--fog); font-size:13px; line-height:1.6; }
+.btn-bs { margin-top:18px; background:var(--red); color:var(--white); font-family:var(--head); font-weight:600; font-size:13px; padding:11px 24px; border-radius:2px; transition:background .18s; }
+.btn-bs:hover { background:var(--red2); }
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+#tbox { position:fixed; bottom:20px; right:20px; z-index:900; display:flex; flex-direction:column; gap:7px; }
+.tst { display:flex; align-items:center; gap:9px; background:var(--steel); border:1px solid var(--grid); border-radius:2px; padding:9px 13px; font-size:12px; min-width:230px; max-width:310px; box-shadow:0 6px 24px rgba(0,0,0,.55); animation:tin .28s var(--ease) both; }
+.tst.out { animation:tout .28s var(--ease) both; }
+@keyframes tin  { from{opacity:0;transform:translateX(36px)} to{opacity:1;transform:translateX(0)} }
+@keyframes tout { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(36px)} }
+.tst-ico { font-size:16px; flex-shrink:0; }
+.tst strong { display:block; font-size:11px; color:var(--white); font-family:var(--head); }
+.tst span { font-size:10px; color:var(--muted); }
+.tg { border-left:2px solid var(--green); }
+.tr { border-left:2px solid var(--red); }
+.ty { border-left:2px solid var(--gold); }
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+footer { background:var(--coal); border-top:1px solid var(--grid); padding:40px 36px 0; }
+.fg-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:32px; margin-bottom:32px; }
+.fg-brand .logo { margin-bottom:10px; }
+.fg-brand p { font-size:12px; color:var(--muted); line-height:1.7; max-width:230px; }
+.fc h4 { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--fog); margin-bottom:10px; }
+.fc ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.fc ul li a { font-size:12px; color:var(--muted); transition:color .15s; }
+.fc ul li a:hover { color:var(--white); }
+.ft-bot { border-top:1px solid var(--grid); padding:14px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; }
+.ft-bot p { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media(max-width:900px) {
+  #sb { display:none; }
+  .fg-grid { grid-template-columns:1fr 1fr; }
+  .mod-grid { grid-template-columns:1fr; }
+  .mod-img { border-right:none; border-bottom:1px solid var(--grid); min-height:180px; }
+}
+@media(max-width:600px) {
+  .hdr-main { padding:0 16px; }
+  .chips { padding:8px 16px; }
+  .nav { display:none; }
+  #cat { padding:14px 16px; }
+  #hero { padding:0 20px; height:360px; }
+  .fg-grid { grid-template-columns:1fr; }
+  footer { padding:28px 16px 0; }
+  #cdr { width:100vw; }
+  .fr { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="hdr">
+  <div class="hdr-main">
+    <a href="#" class="logo">
+      <div class="logo-box">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M3 13L8 3L13 13" stroke="#f5f3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="5" y1="9.5" x2="11" y2="9.5" stroke="#f5f3ee" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-name">Pit<b>Store</b></span>
+    </a>
+
+    <div class="search-wrap">
+      <input type="text" id="search-input" placeholder="Buscar produtos…" autocomplete="off">
+      <span class="s-icon">⌕</span>
+    </div>
+
+    <nav class="nav">
+      <a href="#" class="on" data-cat="todos">Todos</a>
+      <a href="#" data-cat="colecao">Miniaturas</a>
+      <a href="#" data-cat="sim">Sim Racing</a>
+      <a href="#" data-cat="vestuario">Vestuário</a>
+    </nav>
+
+    <button class="cart-btn" id="open-cart">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1h2l1.5 7h7l1-5H4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="11" cy="12" r="1" fill="currentColor"/></svg>
+      Carrinho
+      <span class="cbadge" id="cbadge">0</span>
+    </button>
+  </div>
+
+  <div class="chips">
+    <button class="chip on" data-cat="todos">Todos</button>
+    <button class="chip" data-cat="colecao">Miniaturas</button>
+    <button class="chip" data-cat="sim">Volantes Sim</button>
+    <button class="chip" data-cat="acessorios">Chaveiros</button>
+    <button class="chip" data-cat="vestuario">Bonés</button>
+    <button class="chip" data-cat="vestuario2">Moletons</button>
+    <button class="chip" data-cat="vestuario3">Camisetas</button>
+    <button class="chip" data-cat="suporte">Suportes</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-geo">
+    <svg viewBox="0 0 600 480" fill="none" preserveAspectRatio="xMidYMid slice">
+      <circle cx="420" cy="240" r="320" stroke="#cc1122" stroke-width="1"/>
+      <circle cx="420" cy="240" r="220" stroke="#cc1122" stroke-width=".6"/>
+      <circle cx="420" cy="240" r="120" stroke="#cc1122" stroke-width=".4"/>
+      <line x1="100" y1="240" x2="600" y2="240" stroke="#cc1122" stroke-width=".5"/>
+      <line x1="420" y1="0" x2="420" y2="480" stroke="#cc1122" stroke-width=".5"/>
+      <line x1="100" y1="0" x2="600" y2="480" stroke="#cc1122" stroke-width=".3"/>
+      <line x1="600" y1="0" x2="100" y2="480" stroke="#cc1122" stroke-width=".3"/>
+    </svg>
+  </div>
+
+  <div class="hero-c">
+    <p class="hero-tag">Temporada 2025</p>
+    <h1 class="hero-h">
+      Viva a<br>
+      <span>Corrida.</span>
+    </h1>
+    <p class="hero-sub">Miniaturas, vestuário e acessórios para quem respira automobilismo.</p>
+    <div class="hero-acts">
+      <button class="btn-r" onclick="document.getElementById('cat').scrollIntoView({behavior:'smooth'})">Ver Produtos</button>
+      <button class="btn-o" onclick="filterCat('colecao')">Miniaturas</button>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN -->
+<div id="main">
+
+  <aside id="sb">
+    <div class="sb-s">
+      <p class="sb-lbl">Ordenar</p>
+      <select class="sel" id="sort-sel">
+        <option value="default">Relevância</option>
+        <option value="price-asc">Menor preço</option>
+        <option value="price-desc">Maior preço</option>
+        <option value="rating">Melhor avaliado</option>
+        <option value="name">Nome A–Z</option>
+      </select>
+    </div>
+    <hr class="sb-hr">
+    <div class="sb-s">
+      <p class="sb-lbl">Faixa de preço</p>
+      <div class="pr">
+        <input type="number" id="pmin" placeholder="Mín">
+        <span class="pr-sep">—</span>
+        <input type="number" id="pmax" placeholder="Máx">
+      </div>
+    </div>
+    <hr class="sb-hr">
+    <div class="sb-s">
+      <p class="sb-lbl">Avaliação</p>
+      <div class="rop">
+        <label><input type="radio" name="rat" value="0" checked> Todas</label>
+        <label><input type="radio" name="rat" value="4"> <span class="rstars">★★★★</span> ou mais</label>
+        <label><input type="radio" name="rat" value="4.5"> <span class="rstars">★★★★½</span> ou mais</label>
+      </div>
+    </div>
+    <hr class="sb-hr">
+    <button class="btn-clr" onclick="clearF()">Limpar filtros</button>
+  </aside>
+
+  <div id="cat">
+    <div class="cat-hd">
+      <div class="vtoggle">
+        <button class="vbtn on" id="gbtn" onclick="setV('grid')" title="Grade">⊞</button>
+        <button class="vbtn" id="lbtn" onclick="setV('list')" title="Lista">☰</button>
+      </div>
+    </div>
+    <div id="pgrid"></div>
+  </div>
+</div>
+
+<!-- CART -->
+<div id="cov" onclick="closeCart()"></div>
+<div id="cdr">
+  <div class="cdr-hd">
+    <h2>Carrinho</h2>
+    <button class="cdr-x" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cdr-items" id="cdr-list"></div>
+  <div class="cdr-ft" id="cdr-ft" style="display:none">
+    <div class="cdr-totals">
+      <div class="ct"><span>Subtotal</span><span id="ct-sub">R$ 0</span></div>
+      <div class="ct"><span>Frete</span><span id="ct-frete">—</span></div>
+      <div class="ct tot"><span>Total</span><span id="ct-tot">R$ 0</span></div>
+    </div>
+    <button class="btn-chk" onclick="openChk()">Finalizar Compra</button>
+    <button class="btn-cnt" onclick="closeCart()">Continuar Comprando</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="mov" onclick="handleMov(event)">
+  <div id="pmod">
+    <div class="mod-grid">
+      <div class="mod-img" id="mod-img"></div>
+      <div class="mod-info">
+        <button class="mod-x" onclick="closeMod()">✕</button>
+        <p class="mod-brand" id="mod-brand"></p>
+        <h2 class="mod-name" id="mod-name"></h2>
+        <div class="mod-rat"><span class="mod-stars" id="mod-stars"></span><span style="font-size:11px;color:var(--muted)" id="mod-rc"></span></div>
+        <p class="mod-desc" id="mod-desc"></p>
+        <div class="mod-specs" id="mod-specs"></div>
+        <div class="mod-pr"><span class="mod-old" id="mod-old"></span><span class="mod-price" id="mod-price"></span></div>
+        <div class="mod-qty">
+          <span class="mod-ql">Qtd.</span>
+          <button class="mqb" onclick="mq(-1)">−</button>
+          <span class="mqv" id="mqv">1</span>
+          <button class="mqb" onclick="mq(1)">+</button>
+        </div>
+        <button class="btn-madd" onclick="addMod()">Adicionar ao Carrinho</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT -->
+<div id="chkov" onclick="handleChk(event)">
+  <div id="chkmod">
+    <div id="chk-form">
+      <h2 class="chk-title">Finalizar Compra</h2>
+      <div class="fr"><div class="fg"><label>Nome</label><input id="cn" placeholder="Seu nome"></div><div class="fg"><label>Sobrenome</label><input id="cs" placeholder="Sobrenome"></div></div>
+      <div class="fr full"><div class="fg"><label>E-mail</label><input id="ce" type="email" placeholder="seu@email.com"></div></div>
+      <div class="fr"><div class="fg"><label>CPF</label><input id="cc" placeholder="000.000.000-00"></div><div class="fg"><label>CEP</label><input id="ccep" placeholder="00000-000"></div></div>
+      <div class="fr full"><div class="fg"><label>Endereço</label><input id="cend" placeholder="Rua, número, complemento"></div></div>
+      <div class="fr"><div class="fg"><label>Cartão</label><input id="ccard" placeholder="0000 0000 0000 0000"></div><div class="fg"><label>Validade / CVV</label><input id="ccvv" placeholder="MM/AA  CVV"></div></div>
+      <div class="fr full"><div class="fg"><label>Parcelamento</label><select id="cparc"><option>1× sem juros</option><option>2× sem juros</option><option>3× sem juros</option><option>6× sem juros</option><option>12× sem juros</option></select></div></div>
+      <div class="chk-tot"><span>Total</span><span id="chk-tv">R$ 0</span></div>
+      <div class="chk-acts"><button class="btn-bk" onclick="closeChk()">Voltar</button><button class="btn-ok" onclick="confirmChk()">Confirmar Pedido</button></div>
+    </div>
+    <div class="chk-ok" id="chk-ok">
+      <div class="si">🏆</div>
+      <h3>Pedido Confirmado!</h3>
+      <p>Seu gear está a caminho.<br>Confirmação enviada por e-mail.<br><br><strong style="color:var(--white)">Obrigado por comprar na Pit Store!</strong></p>
+      <button class="btn-bs" onclick="closeChk()">Continuar Comprando</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fg-grid">
+    <div class="fg-brand">
+      <a href="#" class="logo" style="margin-bottom:10px">
+        <div class="logo-box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 13L8 3L13 13" stroke="#f5f3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="5" y1="9.5" x2="11" y2="9.5" stroke="#f5f3ee" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <span class="logo-name">Pit<b>Store</b></span>
+      </a>
+      <p>Gear de automobilismo com design exclusivo. Para quem vive a corrida além das telas.</p>
+    </div>
+    <div class="fc"><h4>Produtos</h4><ul><li><a href="#">Miniaturas</a></li><li><a href="#">Volantes Sim</a></li><li><a href="#">Vestuário</a></li><li><a href="#">Suportes</a></li><li><a href="#">Chaveiros</a></li></ul></div>
+    <div class="fc"><h4>Atendimento</h4><ul><li><a href="#">Meu Pedido</a></li><li><a href="#">Trocas</a></li><li><a href="#">Frete</a></li><li><a href="#">FAQ</a></li></ul></div>
+    <div class="fc"><h4>Institucional</h4><ul><li><a href="#">Sobre nós</a></li><li><a href="#">Parceiros</a></li><li><a href="#">Privacidade</a></li><li><a href="#">Termos</a></li></ul></div>
+  </div>
+  <div class="ft-bot">
+    <p>© 2025 Pit Store Motorsport Gear — Todos os direitos reservados</p>
+    <p>Visa · Mastercard · Pix · Boleto</p>
+  </div>
+</footer>
+
+<div id="tbox"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   IMAGENS DOS PRODUTOS — salve seus arquivos
+   de imagem com estes nomes exatos dentro de
+   uma pasta "imgs" ao lado deste arquivo HTML.
+
+   Estrutura de pastas esperada:
+
+   minha-loja/
+   ├── pit_store.html   (este arquivo)
+   └── imgs/
+       ├── miniatura.jpg
+       ├── volante.jpg
+       ├── chaveiro.jpg
+       ├── bone.jpg
+       ├── moletom.jpg
+       ├── camiseta.jpg
+       └── suporte.jpg
+
+   Se algum arquivo não existir ou o nome não
+   bater, o card mostra um placeholder com a
+   inicial do produto — nada quebra.
+═══════════════════════════════════════════ */
+const IMAGES = {
+  1: 'imgs/miniatura.jpg',  /* Miniatura F1 1:18      */
+  2: 'imgs/volante.jpg',    /* Volante Sim Racing     */
+  3: 'imgs/chaveiro.jpg',   /* Chaveiro Diecast       */
+  4: 'imgs/bone.jpg',       /* Boné Race Day          */
+  5: 'imgs/moletom.jpg',    /* Moletom Paddock        */
+  6: 'imgs/camiseta.jpg',   /* Camiseta Race Suit     */
+  7: 'imgs/suporte.jpg',    /* Suporte Expositor Pro  */
+};
+
+function productImg(id, alt) {
+  const src = IMAGES[id];
+  if (src) {
+    return `<img src="${src}" alt="${alt}" loading="lazy"
+      style="width:100%;height:100%;object-fit:cover;display:block"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="img-placeholder" style="display:none">
+        <span>${alt.slice(0,1)}</span>
+      </div>`;
+  }
+  return `<div class="img-placeholder"><span>${alt.slice(0,1)}</span></div>`;
+}
+
+/* ═══════════════════════════════════════════
+   PRODUTOS
+═══════════════════════════════════════════ */
+const PRODUCTS = [
+  { id:1, name:'Miniatura F1 Alta Performance — 1:18', brand:'Pit Store', cat:'colecao', price:349, oldPrice:399, rating:4.9, reviews:112, badge:'hot',
+    desc:'Réplica diecast em escala 1:18 com detalhes pintados à mão, cockpit completo e base expositora acrílica numerada.',
+    specs:[['Escala','1:18'],['Material','Diecast metal + ABS'],['Dimensão','~25 cm'],['Acompanha','Base acrílica numerada']] },
+  { id:2, name:'Volante Sim Racing — Pit Pro F1', brand:'Pit Store', cat:'sim', price:1190, oldPrice:1390, rating:4.8, reviews:87, badge:'sale',
+    desc:'Volante formato F1 com 18 botões programáveis, paddles magnéticos e display LCD central. PC, PS5 e Xbox.',
+    specs:[['Botões','18 programáveis'],['Paddles','Magnéticos em metal'],['Display','LCD 2.4"'],['Compatível','PC / PS5 / Xbox']] },
+  { id:3, name:'Chaveiro Diecast — F1 Edition', brand:'Pit Store', cat:'acessorios', price:59, oldPrice:null, rating:4.5, reviews:234, badge:null,
+    desc:'Miniatura de carro F1 em diecast com argola em aço inox 316L. Logo Pit Store gravado a laser.',
+    specs:[['Material','Diecast + cromo'],['Dimensão','6 cm'],['Argola','Aço inox 316L'],['Acabamento','Gravação laser']] },
+  { id:4, name:'Boné Race Day — Pit Store', brand:'Pit Store', cat:'vestuario', price:129, oldPrice:159, rating:4.7, reviews:318, badge:'sale',
+    desc:'Boné 6 painéis com logo bordado em relevo, aba pré-curvada e fecho snapback ajustável. Tecido respirável.',
+    specs:[['Estrutura','6 painéis'],['Logo','Bordado 3D em relevo'],['Fechamento','Snapback'],['Tecido','Poliéster respirável']] },
+  { id:5, name:'Moletom Paddock — Pit Store', brand:'Pit Store', cat:'vestuario2', price:279, oldPrice:null, rating:4.6, reviews:145, badge:'new',
+    desc:'Fleece premium com logo bordado, detalhes dourados nas mangas e bolso canguru duplo. Modelagem regular.',
+    specs:[['Material','80% Algodão / 20% Poliéster'],['Modelagem','Regular fit'],['Detalhe','Listras douradas nas mangas'],['Cuidado','Lavar 30°C']] },
+  { id:6, name:'Camiseta Race Suit — Pit Store', brand:'Pit Store', cat:'vestuario3', price:119, oldPrice:null, rating:4.5, reviews:267, badge:null,
+    desc:'Dry-fit inspirada em macacões de piloto. Gola V estruturada, corte slim, número personalizável sob encomenda.',
+    specs:[['Material','100% Poliamida técnica'],['Modelagem','Slim fit'],['Gola','V estruturada'],['Personalização','Número sob encomenda']] },
+  { id:7, name:'Suporte Expositor — Colecionador Pro', brand:'Pit Store', cat:'suporte', price:189, oldPrice:219, rating:4.8, reviews:76, badge:'sale',
+    desc:'Aço escovado com base giratória 360° e iluminação LED âmbar inclusa. Para capacetes, miniaturas e colecionáveis.',
+    specs:[['Material','Aço escovado + acrílico'],['LED','Âmbar incluso'],['Base','Giratória 360°'],['Compatível','Capacetes 1:1, 1:2, miniaturas']] },
+];
+
+/* ═══════════════════════════════════════════
+   ESTADO
+═══════════════════════════════════════════ */
+let cart=[], currentCat='todos', term='', sort='default';
+let pMin=0, pMax=Infinity, minRat=0;
+let vMode='grid', mProd=null, mQty=1, wl=new Set();
+
+function strs(r){ return '★'.repeat(Math.floor(r))+(r%1>=.5?'½':''); }
+
+function filtered(){
+  let l=[...PRODUCTS];
+  if(currentCat!=='todos') l=l.filter(p=>p.cat===currentCat);
+  if(term) l=l.filter(p=>p.name.toLowerCase().includes(term)||p.desc.toLowerCase().includes(term));
+  l=l.filter(p=>p.price>=pMin&&p.price<=pMax&&p.rating>=minRat);
+  switch(sort){
+    case 'price-asc': l.sort((a,b)=>a.price-b.price); break;
+    case 'price-desc':l.sort((a,b)=>b.price-a.price); break;
+    case 'rating':    l.sort((a,b)=>b.rating-a.rating); break;
+    case 'name':      l.sort((a,b)=>a.name.localeCompare(b.name)); break;
+  }
+  return l;
+}
+
+function render(){
+  const g=document.getElementById('pgrid'), l=filtered();
+  document.getElementById('rnum')&&(document.getElementById('rnum').textContent=l.length);
+  if(!l.length){ g.innerHTML=`<div class="empty"><div class="ei">🏁</div><h3>Nenhum resultado</h3><p>Tente outros filtros.</p></div>`; return; }
+  g.innerHTML=l.map(p=>{
+    const bdg=p.badge?`<span class="pc-badge b-${p.badge}">${p.badge==='sale'?'Oferta':p.badge==='new'?'Novo':'Hot'}</span>`:'';
+    const op=p.oldPrice?`<span class="p-old">R$ ${p.oldPrice}</span>`:'';
+    const w=wl.has(p.id);
+    return `<div class="pc" onclick="openMod(${p.id})">${bdg}
+      <button class="pc-wish ${w?'w':''}" onclick="tgWish(event,${p.id})">${w?'❤️':'🤍'}</button>
+      <div class="pc-img">${productImg(p.id, p.name)}</div>
+      <div class="pc-body">
+        <span class="pc-brand">${p.brand}</span>
+        <h3 class="pc-name">${p.name}</h3>
+        <p class="pc-desc">${p.desc.slice(0,70)}…</p>
+        <div class="pc-rat"><span class="pc-stars">${strs(p.rating)}</span><span class="pc-rc">(${p.reviews})</span></div>
+      </div>
+      <div class="pc-foot"><div>${op}<span class="p-now">R$ ${p.price}</span></div>
+        <button class="btn-cart" onclick="addCart(event,${p.id})">+ Carrinho</button></div>
+    </div>`;
+  }).join('');
+}
+
+/* FILTROS */
+function filterCat(c){
+  currentCat=c;
+  document.querySelectorAll('.chip,.nav a[data-cat]').forEach(el=>el.classList.toggle('on',el.dataset.cat===c));
+  render();
+}
+function applyF(){
+  pMin=parseFloat(document.getElementById('pmin').value)||0;
+  pMax=parseFloat(document.getElementById('pmax').value)||Infinity;
+  minRat=parseFloat(document.querySelector('input[name="rat"]:checked')?.value||0);
+  render();
+}
+function clearF(){
+  document.getElementById('pmin').value=''; document.getElementById('pmax').value='';
+  document.querySelector('input[name="rat"][value="0"]').checked=true;
+  pMin=0; pMax=Infinity; minRat=0; render();
+}
+function setV(v){
+  vMode=v; document.getElementById('pgrid').className=v==='list'?'lv':'';
+  document.getElementById('gbtn').classList.toggle('on',v==='grid');
+  document.getElementById('lbtn').classList.toggle('on',v==='list');
+}
+
+/* WISHLIST */
+function tgWish(e,id){
+  e.stopPropagation();
+  wl.has(id)?(wl.delete(id),toast('🤍','Removido dos favoritos','','ty')):(wl.add(id),toast('❤️','Adicionado aos favoritos!','','ty'));
+  render();
+}
+
+/* CARRINHO */
+function addCart(e,id,qty=1){
+  e&&e.stopPropagation();
+  const p=PRODUCTS.find(x=>x.id===id), ex=cart.find(x=>x.id===id);
+  ex?ex.qty+=qty:cart.push({...p,qty});
+  updCart(); toast('🛒',p.name.slice(0,28)+'…','Adicionado','tg');
+}
+function rmCart(id){ cart=cart.filter(x=>x.id!==id); updCart(); }
+function chgQty(id,d){ const i=cart.find(x=>x.id===id); if(!i)return; i.qty+=d; i.qty<=0?rmCart(id):updCart(); }
+function total(){ return cart.reduce((s,i)=>s+i.price*i.qty,0); }
+function updCart(){
+  const n=cart.reduce((s,i)=>s+i.qty,0);
+  const b=document.getElementById('cbadge');
+  b.textContent=n; b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
+  renderCart();
+  const sub=total(), fr=sub>=299?0:29.90;
+  document.getElementById('ct-sub').textContent=`R$ ${sub}`;
+  document.getElementById('ct-frete').textContent=fr?`R$ ${fr.toFixed(2)}`:'Grátis';
+  document.getElementById('ct-tot').textContent=`R$ ${(sub+fr).toFixed(2)}`;
+  document.getElementById('chk-tv').textContent=`R$ ${(sub+fr).toFixed(2)}`;
+  document.getElementById('cdr-ft').style.display=cart.length?'':'none';
+}
+function renderCart(){
+  const el=document.getElementById('cdr-list');
+  if(!cart.length){ el.innerHTML=`<div class="cdr-empty"><span>🏁</span><p>Carrinho vazio.</p></div>`; return; }
+  el.innerHTML=cart.map(i=>`<div class="ci">
+    <div class="ci-thumb">${productImg(i.id, i.name)}</div>
+    <div class="ci-info">
+      <p class="ci-brand">${i.brand}</p>
+      <p class="ci-name">${i.name}</p>
+      <div class="ci-ctl">
+        <button class="qb" onclick="chgQty(${i.id},-1)">−</button>
+        <span class="qv">${i.qty}</span>
+        <button class="qb" onclick="chgQty(${i.id},1)">+</button>
+        <button class="ci-rm" onclick="rmCart(${i.id})">✕ Remover</button>
+      </div>
+    </div>
+    <span class="ci-price">R$ ${i.price*i.qty}</span>
+  </div>`).join('');
+}
+function openCart(){ document.getElementById('cov').classList.add('open'); document.getElementById('cdr').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeCart(){ document.getElementById('cov').classList.remove('open'); document.getElementById('cdr').classList.remove('open'); document.body.style.overflow=''; }
+
+/* MODAL */
+function openMod(id){
+  mProd=PRODUCTS.find(p=>p.id===id); mQty=1;
+  const p=mProd;
+  document.getElementById('mod-img').innerHTML=productImg(p.id, p.name);
+  document.getElementById('mod-brand').textContent=p.brand;
+  document.getElementById('mod-name').textContent=p.name;
+  document.getElementById('mod-stars').textContent=strs(p.rating)+' '+p.rating;
+  document.getElementById('mod-rc').textContent=`(${p.reviews} avaliações)`;
+  document.getElementById('mod-desc').textContent=p.desc;
+  document.getElementById('mod-price').textContent=`R$ ${p.price}`;
+  document.getElementById('mod-old').textContent=p.oldPrice?`R$ ${p.oldPrice}`:'';
+  document.getElementById('mqv').textContent=mQty;
+  document.getElementById('mod-specs').innerHTML=p.specs.map(([l,v])=>`<div class="spr"><span class="spl">${l}</span><span class="spv">${v}</span></div>`).join('');
+  document.getElementById('mov').classList.add('open'); document.body.style.overflow='hidden';
+}
+function closeMod(){ document.getElementById('mov').classList.remove('open'); document.body.style.overflow=''; }
+function handleMov(e){ if(e.target===document.getElementById('mov')) closeMod(); }
+function mq(d){ mQty=Math.max(1,mQty+d); document.getElementById('mqv').textContent=mQty; }
+function addMod(){ if(!mProd)return; addCart(null,mProd.id,mQty); closeMod(); }
+
+/* CHECKOUT */
+function openChk(){ closeCart(); document.getElementById('chk-form').style.display=''; document.getElementById('chk-ok').style.display='none'; document.getElementById('chkov').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeChk(){ document.getElementById('chkov').classList.remove('open'); document.body.style.overflow=''; }
+function handleChk(e){ if(e.target===document.getElementById('chkov')) closeChk(); }
+function confirmChk(){
+  if(!document.getElementById('cn').value.trim()||!document.getElementById('ce').value.trim()||!document.getElementById('ccard').value.trim()){
+    toast('⚠️','Preencha todos os campos','Nome, e-mail e cartão obrigatórios','tr'); return;
+  }
+  document.getElementById('chk-form').style.display='none';
+  document.getElementById('chk-ok').style.display='block';
+  cart=[]; updCart(); toast('🏆','Pedido confirmado!','Confirmação enviada por e-mail','tg');
+}
+
+/* TOAST */
+function toast(ico,title,sub,type='tg'){
+  const box=document.getElementById('tbox'), t=document.createElement('div');
+  t.className=`tst ${type}`;
+  t.innerHTML=`<span class="tst-ico">${ico}</span><div class="tst"><strong>${title}</strong>${sub?`<span>${sub}</span>`:''}</div>`;
+  box.appendChild(t);
+  setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),280); },3000);
+}
+
+/* EVENTOS */
+document.getElementById('open-cart').addEventListener('click',openCart);
+document.getElementById('search-input').addEventListener('input',e=>{ term=e.target.value.toLowerCase(); render(); });
+document.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>filterCat(b.dataset.cat)));
+document.querySelectorAll('.nav a[data-cat]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); filterCat(a.dataset.cat); }));
+document.getElementById('sort-sel').addEventListener('change',e=>{ sort=e.target.value; render(); });
+document.getElementById('pmin').addEventListener('input',applyF);
+document.getElementById('pmax').addEventListener('input',applyF);
+document.querySelectorAll('input[name="rat"]').forEach(r=>r.addEventListener('change',applyF));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeMod(); closeCart(); closeChk(); } });
+
+render(); updCart();
+</script>
+</body>
+</html>
